@@ -1,11 +1,11 @@
 use std::fmt::write;
 
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
 
 use crate::error::ContractError;
-use crate::helpers::assert_sent_sufficient_coin;
+use crate::helpers::*;
 use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, ResolveRecordResponse};
 use crate::state::{Config, NameRecord, CONFIG, NAME_RESOLVER};
 
@@ -98,9 +98,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 None => None,
             };
             let resp = ResolveRecordResponse { address };
-            to_binary(&resp)
+            to_json_binary(&resp)
         }
-        QueryMsg::Config {} => to_binary::<ConfigResponse>(&CONFIG.load(deps.storage)?.into()),
+        QueryMsg::Config {} => to_json_binary::<ConfigResponse>(&CONFIG.load(deps.storage)?.into()),
     }
 }
 
