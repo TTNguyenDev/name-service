@@ -48,10 +48,13 @@ pub fn execute_register(
 ) -> Result<Response, ContractError> {
     validate_name(&name)?;
     let config = CONFIG.load(deps.storage)?;
-    assert_sent_sufficient_coin(&info.funds, config.purchase_price)?;
+    assert_sent_sufficient_coin(&info.funds, config.purchase_price.clone())?;
 
     let key = name.as_bytes();
-    let record = NameRecord { owner: info.sender };
+    let record = NameRecord {
+        owner: info.sender,
+        cur_price: config.purchase_price.unwrap(),
+    };
 
     if (NAME_RESOLVER.may_load(deps.storage, key)?).is_some() {
         return Err(ContractError::NameTaken { name });
@@ -68,10 +71,16 @@ pub fn execute_transfer(
     to: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    assert_sent_sufficient_coin(&info.funds, config.transfer_price)?;
-
-    let new_owner = deps.api.addr_validate(&to)?;
     let key = name.as_bytes();
+
+    let record = if let Some(data) = NAME_RESOLVER.may_load(deps.storage, key)? {
+        data
+    } else {
+        return Err(ContractError::NameNotExists { name: name.clone() });
+    };
+
+    let coin = assert_sent_sufficient_coin(&info.funds, Some(record.cur_price))?;
+    let new_owner = deps.api.addr_validate(&to)?;
     NAME_RESOLVER.update(deps.storage, key, |record| {
         if let Some(mut record) = record {
             if info.sender != record.owner {
@@ -79,11 +88,13 @@ pub fn execute_transfer(
             }
 
             record.owner = new_owner.clone();
+            record.cur_price = coin.unwrap().clone();
             Ok(record)
         } else {
             Err(ContractError::NameNotExists { name: name.clone() })
         }
     })?;
+
     Ok(Response::default())
 }
 

@@ -11,6 +11,7 @@ pub struct Config {
 #[cw_serde]
 pub struct NameRecord {
     pub owner: Addr,
+    pub cur_price: Coin,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
