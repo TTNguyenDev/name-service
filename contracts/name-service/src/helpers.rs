@@ -1,27 +1,23 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use crate::error::ContractError;
+use cosmwasm_std::Coin;
 
-use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
-
-use crate::msg::ExecuteMsg;
-
-/// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
-/// for working with this.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct CwTemplateContract(pub Addr);
-
-impl CwTemplateContract {
-    pub fn addr(&self) -> Addr {
-        self.0.clone()
-    }
-
-    pub fn call<T: Into<ExecuteMsg>>(&self, msg: T) -> StdResult<CosmosMsg> {
-        let msg = to_binary(&msg.into())?;
-        Ok(WasmMsg::Execute {
-            contract_addr: self.addr().into(),
-            msg,
-            funds: vec![],
+pub fn assert_sent_sufficient_coin(
+    sent: &[Coin],
+    required: Option<Coin>
+) -> Result<(), ContractError> {
+    if let Some(required_coin) = required {
+        let required_amount = required_coin.amount.u128();
+        if required_amount > 0 {
+            let sent_sufficient_funds = sent.iter().any(|coin| {
+                coin.denom = required_coin.denom && coin.amount.u128() > required_amount
+            });
+            if sent_sufficient_funds {
+                return Ok(());
+            } else {
+                return Err(ContractError::InsufficientFundSend {})
+            }
         }
-        .into())
     }
-}
+
+    Ok(())
+};

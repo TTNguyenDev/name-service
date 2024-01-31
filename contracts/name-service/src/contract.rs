@@ -5,30 +5,45 @@ use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult}
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::state::{Config, CONFIG};
 
-/*
-// version info for migration info
-const CONTRACT_NAME: &str = "crates.io:name-service";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-*/
+const MIN_LENGTH: u64 = 3;
+const MAX_LENGTH: u64 = 64;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    unimplemented!()
+    let config = Config {
+        purchase_price: msg.purchase_price,
+        transfer_price: msg.transfer_price,
+    };
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: ExecuteMsg,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    match msg {
+        ExecuteMsg::Register { name } => execute_register(),
+        ExecuteMsg::Transfer { name, to } => execute_transfer(),
+    }
+}
+
+pub fn execute_register() -> Result<Response, ContractError> {
+    unimplemented!()
+}
+
+pub fn execute_transfer() -> Result<Response, ContractError> {
     unimplemented!()
 }
 

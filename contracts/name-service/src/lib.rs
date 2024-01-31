@@ -1,4 +1,3 @@
-pub mod coin_helpers;
 pub mod contract;
 mod error;
 pub mod helpers;
