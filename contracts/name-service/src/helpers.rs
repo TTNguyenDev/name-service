@@ -9,15 +9,15 @@ pub fn assert_sent_sufficient_coin(
         let required_amount = required_coin.amount.u128();
         if required_amount > 0 {
             let sent_sufficient_funds = sent.iter().any(|coin| {
-                coin.denom = required_coin.denom && coin.amount.u128() > required_amount
+                coin.denom == required_coin.denom && coin.amount.u128() >= required_amount
             });
             if sent_sufficient_funds {
                 return Ok(());
             } else {
-                return Err(ContractError::InsufficientFundSend {})
+                return Err(ContractError::InsufficientFundsSend{})
             }
         }
     }
 
     Ok(())
-};
+}
