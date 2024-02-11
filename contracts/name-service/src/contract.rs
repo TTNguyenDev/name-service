@@ -6,11 +6,8 @@ use cosmwasm_std::{
 
 use crate::error::ContractError;
 use crate::helpers::*;
-use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, ResolveRecordResponse};
-use crate::state::{Config, NameRecord, CONFIG, NAME_RESOLVER};
-
-const MIN_LENGTH: u64 = 3;
-const MAX_LENGTH: u64 = 64;
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, ResolveRecordResponse};
+use crate::state::{NameRecord, NAME_RESOLVER, PURCHASE_PRICE};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -19,12 +16,7 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let config = Config {
-        purchase_price: msg.purchase_price,
-        transfer_price: msg.transfer_price,
-    };
-    CONFIG.save(deps.storage, &config)?;
-
+    PURCHASE_PRICE.save(deps.storage, &msg.purchase_price)?;
     Ok(Response::default())
 }
 
@@ -47,13 +39,13 @@ pub fn execute_register(
     name: String,
 ) -> Result<Response, ContractError> {
     validate_name(&name)?;
-    let config = CONFIG.load(deps.storage)?;
-    assert_sent_sufficient_coin(&info.funds, config.purchase_price.clone())?;
+    let purchase_price = PURCHASE_PRICE.load(deps.storage)?;
+    assert_sent_sufficient_coin(&info.funds, purchase_price.clone())?;
 
     let key = name.as_bytes();
     let record = NameRecord {
         owner: info.sender,
-        cur_price: config.purchase_price.unwrap(),
+        cur_price: purchase_price.unwrap(),
     };
 
     if (NAME_RESOLVER.may_load(deps.storage, key)?).is_some() {
@@ -70,7 +62,6 @@ pub fn execute_transfer(
     name: String,
     to: String,
 ) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
     let key = name.as_bytes();
 
     let record = if let Some(data) = NAME_RESOLVER.may_load(deps.storage, key)? {
@@ -94,14 +85,13 @@ pub fn execute_transfer(
             Err(ContractError::NameNotExists { name: name.clone() })
         }
     })?;
-
     Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::ResolveREcord { name } => {
+        QueryMsg::ResolveRecord { name } => {
             let key = name.as_bytes();
 
             let address = match NAME_RESOLVER.may_load(deps.storage, key)? {
@@ -110,36 +100,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             };
             let resp = ResolveRecordResponse { address };
             to_json_binary(&resp)
-        }
-        QueryMsg::Config {} => to_json_binary::<ConfigResponse>(&CONFIG.load(deps.storage)?.into()),
-    }
-}
-
-fn invalid_char(c: char) -> bool {
-    let is_valid =
-        c.is_ascii_digit() || c.is_ascii_lowercase() || (c == '.' || c == '-' || c == '_');
-    !is_valid
-}
-
-fn validate_name(name: &str) -> Result<(), ContractError> {
-    let length = name.len() as u64;
-    if length < MIN_LENGTH {
-        Err(ContractError::NameTooShort {
-            length,
-            min_length: MIN_LENGTH,
-        })
-    } else if length > MAX_LENGTH {
-        Err(ContractError::NameTooLong {
-            length,
-            max_length: MAX_LENGTH,
-        })
-    } else {
-        match name.find(invalid_char) {
-            None => Ok(()),
-            Some(bytepos_invalid_char_start) => {
-                let c = name[bytepos_invalid_char_start..].chars().next().unwrap();
-                Err(ContractError::InvalidCharacter { c })
-            }
         }
     }
 }
