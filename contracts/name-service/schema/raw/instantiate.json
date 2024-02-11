@@ -12,16 +12,6 @@
           "type": "null"
         }
       ]
-    },
-    "transfer_price": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/Coin"
-        },
-        {
-          "type": "null"
-        }
-      ]
     }
   },
   "additionalProperties": false,
