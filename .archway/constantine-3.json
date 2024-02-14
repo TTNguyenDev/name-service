@@ -1,0 +1,35 @@
+{
+  "deployments": [
+    {
+      "action": "instantiate",
+      "txhash": "73AC05B3C422B07C8485BE648796831D4DFDBD6CA706FFE7FAF5D8ED4C8616D6",
+      "wasm": {
+        "codeId": 2064
+      },
+      "contract": {
+        "name": "nameservice",
+        "version": "0.1.0",
+        "address": "archway17uduyqml2d56h3sxe6830avxxy5633avj30l7qw0mjev0d98hspsn38gwk",
+        "admin": "archway1uuhs2lumkgxm233wr6gwqt00w8352g9gjftsh7"
+      },
+      "msg": {
+        "purchase_price": {
+          "amount": "100",
+          "denom": "aconst"
+        }
+      }
+    },
+    {
+      "action": "store",
+      "txhash": "CA318CC58700707EE2F12067F3036E59ECFC0BB0F017C5E6CA3C8199702AE230",
+      "wasm": {
+        "codeId": 2064,
+        "checksum": "b8ce41bc8c53e9207f5fafaed25b22830c3d0e34bf9490e88c09eaf008b1fd06"
+      },
+      "contract": {
+        "name": "nameservice",
+        "version": "0.1.0"
+      }
+    }
+  ]
+}
